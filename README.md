@@ -1,4 +1,4 @@
-## Layout task
+## Selector task
 
 ```
 yarn && yarn start
