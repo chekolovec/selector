@@ -18,25 +18,28 @@ export const CustomSelect = ({
     (event, selectedOption) => {
       event.stopPropagation();
       onSelectOption(
-        selectedOptions.filter((option) => option.id !== selectedOption.id)
+        selectedOptions.filter((optionId) => optionId !== selectedOption.id)
       );
     },
     [onSelectOption, selectedOptions]
   );
 
   const renderSelectedOption = useCallback(
-    (option) => (
-      <div className={classNames(styles.selectedOption)} key={option.id}>
-        <p className={styles.label}>{option.label}</p>
-        <div
-          className={styles.deleteButton}
-          onClick={(event) => handleDeleteClick(event, option)}
-        >
-          <IoClose />
+    (optionId) => {
+      const option = options.find((item) => item.id === optionId);
+      return (
+        <div className={classNames(styles.selectedOption)} key={option.id}>
+          <p className={styles.label}>{option.label}</p>
+          <div
+            className={styles.deleteButton}
+            onClick={(event) => handleDeleteClick(event, option)}
+          >
+            <IoClose />
+          </div>
         </div>
-      </div>
-    ),
-    [handleDeleteClick]
+      );
+    },
+    [handleDeleteClick, options]
   );
 
   useEffect(() => {
@@ -54,13 +57,13 @@ export const CustomSelect = ({
   const handleSelect = useCallback(
     (selectedOption) => {
       toggleList(false);
-      if (selectedOptions.includes(selectedOption)) {
+      if (selectedOptions.includes(selectedOption.id)) {
         onSelectOption(
-          selectedOptions.filter((option) => option.id !== selectedOption.id)
+          selectedOptions.filter((optionId) => optionId !== selectedOption.id)
         );
         return;
       }
-      onSelectOption([...selectedOptions, selectedOption]);
+      onSelectOption([...selectedOptions, selectedOption.id]);
     },
     [onSelectOption, selectedOptions]
   );
@@ -77,18 +80,17 @@ export const CustomSelect = ({
   const handleDropEvent = useCallback(
     (event) => {
       const itemId = event.dataTransfer.getData("drag-item");
-      const selectedOption = options.find((option) => option.id === itemId);
-      if (selectedOption && !selectedOptions.includes(selectedOption)) {
-        onSelectOption([...selectedOptions, selectedOption]);
+      if (!selectedOptions.includes(itemId)) {
+        onSelectOption([...selectedOptions, itemId]);
       }
     },
-    [onSelectOption, options, selectedOptions]
+    [onSelectOption, selectedOptions]
   );
 
   const renderOption = useCallback(
     (option) => {
       const isSelected = !!selectedOptions.find(
-        (selected) => selected.id === option.id
+        (selectedId) => selectedId === option.id
       );
 
       return (
