@@ -9,42 +9,28 @@ export const CustomSelect = ({
   options = [],
   selectedOptions = [],
   onSelectOption = () => {},
+  getId = (option) => option.id,
+  getLabel = (option) => option.label,
 }) => {
   const [isListShown, toggleList] = useState(false);
   const [isDragging, toggleDragging] = useState(false);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [dragOverSelector, setDragOverSelector] = useState(null);
   const ref = useRef(null);
 
   const handleDeleteClick = useCallback(
     (event, selectedOption) => {
       event.stopPropagation();
       onSelectOption(
-        selectedOptions.filter((optionId) => optionId !== selectedOption.id)
+        selectedOptions.filter((optionId) => optionId !== getId(selectedOption))
       );
     },
-    [onSelectOption, selectedOptions]
-  );
-
-  const renderSelectedOption = useCallback(
-    (optionId) => {
-      const option = options.find((item) => item.id === optionId);
-      return (
-        <div className={classNames(styles.selectedOption)} key={option.id}>
-          <p className={styles.label}>{option.label}</p>
-          <div
-            className={styles.deleteButton}
-            onClick={(event) => handleDeleteClick(event, option)}
-          >
-            <IoClose />
-          </div>
-        </div>
-      );
-    },
-    [handleDeleteClick, options]
+    [getId, onSelectOption, selectedOptions]
   );
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target) && isListShown) {
+      if (isListShown && ref.current && !ref.current.contains(event.target)) {
         toggleList(false);
       }
     };
@@ -57,58 +43,82 @@ export const CustomSelect = ({
   const handleSelect = useCallback(
     (selectedOption) => {
       toggleList(false);
-      if (selectedOptions.includes(selectedOption.id)) {
+      if (selectedOptions.includes(getId(selectedOption))) {
         onSelectOption(
-          selectedOptions.filter((optionId) => optionId !== selectedOption.id)
+          selectedOptions.filter(
+            (optionId) => optionId !== getId(selectedOption)
+          )
         );
         return;
       }
-      onSelectOption([...selectedOptions, selectedOption.id]);
+      onSelectOption([...selectedOptions, getId(selectedOption)]);
     },
-    [onSelectOption, selectedOptions]
+    [getId, onSelectOption, selectedOptions]
   );
 
-  const handleDragStart = (event, option) => {
-    event.dataTransfer.setData("drag-item", option.id);
-    toggleDragging(true);
-  };
+  const handleDragStart = useCallback(
+    (event, option) => {
+      event.dataTransfer.setData("drag-item", getId(option));
+      toggleDragging(true);
+    },
+    [getId]
+  );
 
   const handleDragEnd = useCallback(() => {
     toggleDragging(false);
+    setDragOverIndex(null);
+    setDragOverSelector(null);
   }, []);
 
   const handleDropEvent = useCallback(
-    (event) => {
+    ({ event, index, last }) => {
       const itemId = event.dataTransfer.getData("drag-item");
-      if (!selectedOptions.includes(itemId)) {
+      const oldIndex = selectedOptions.findIndex(
+        (element) => element === itemId
+      );
+      if (itemId && last) {
+        selectedOptions.splice(oldIndex, 1);
         onSelectOption([...selectedOptions, itemId]);
+        return;
+      }
+      if (itemId) {
+        selectedOptions.splice(oldIndex, 1);
+        selectedOptions.splice(oldIndex < index ? index - 1 : index, 0, itemId);
+        onSelectOption([...selectedOptions]);
       }
     },
     [onSelectOption, selectedOptions]
   );
+
+  const handleDragEnter = useCallback((optionId) => {
+    setTimeout(() => {
+      setDragOverIndex(optionId);
+    }, 0);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverIndex(null);
+  }, []);
 
   const renderOption = useCallback(
     (option) => {
       const isSelected = !!selectedOptions.find(
-        (selectedId) => selectedId === option.id
+        (selectedId) => selectedId === getId(option)
       );
 
       return (
         <li
-          key={option.label}
-          draggable
-          onDragStart={(event) => handleDragStart(event, option)}
-          onDragEnd={handleDragEnd}
+          key={getId(option)}
           className={classNames(styles.optionContainer, {
             [styles.active]: isSelected,
           })}
           onClick={() => handleSelect(option)}
         >
-          {option.label}
+          {getLabel(option)}
         </li>
       );
     },
-    [handleDragEnd, handleSelect, selectedOptions]
+    [getId, getLabel, handleSelect, selectedOptions]
   );
 
   const handleClearClick = useCallback(
@@ -117,6 +127,59 @@ export const CustomSelect = ({
       onSelectOption([]);
     },
     [onSelectOption]
+  );
+
+  const renderSelectedOption = useCallback(
+    (optionId, index) => {
+      const option = options.find((item) => getId(item) === optionId);
+      return (
+        <div
+          className={classNames(styles.selectedOptionContainer, {
+            [styles.draggedOver]: optionId === dragOverIndex,
+            [styles.draggedOverLast]:
+              index === selectedOptions.length - 1 && dragOverSelector,
+          })}
+          draggable
+          onDragStart={(event) => handleDragStart(event, option)}
+          onDragEnd={handleDragEnd}
+          key={optionId}
+        >
+          <div className={classNames(styles.selectedOption)}>
+            <p className={styles.label}>{getLabel(option)}</p>
+            <div
+              className={styles.deleteButton}
+              onClick={(event) => handleDeleteClick(event, option)}
+            >
+              <IoClose />
+            </div>
+          </div>
+          {isDragging && (
+            <div
+              onDrop={(event) => handleDropEvent({ event, index })}
+              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={() => handleDragEnter(optionId)}
+              onDragLeave={handleDragLeave}
+              className={classNames(styles.mask, styles.selectedMask)}
+            ></div>
+          )}
+        </div>
+      );
+    },
+    [
+      dragOverIndex,
+      dragOverSelector,
+      getId,
+      getLabel,
+      handleDeleteClick,
+      handleDragEnd,
+      handleDragEnter,
+      handleDragLeave,
+      handleDragStart,
+      handleDropEvent,
+      isDragging,
+      options,
+      selectedOptions.length,
+    ]
   );
 
   return (
@@ -149,9 +212,11 @@ export const CustomSelect = ({
           </div>
           {isDragging && (
             <div
-              onDrop={handleDropEvent}
+              onDragEnter={() => setDragOverSelector(true)}
+              onDragLeave={() => setDragOverSelector(false)}
+              onDrop={(event) => handleDropEvent({ event, last: true })}
               onDragOver={(event) => event.preventDefault()}
-              className={styles.buttonMask}
+              className={classNames(styles.mask, styles.buttonMask)}
             ></div>
           )}
         </div>

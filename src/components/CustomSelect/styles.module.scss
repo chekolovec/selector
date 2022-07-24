@@ -15,12 +15,18 @@
   background: none;
 }
 
-.buttonMask {
+.mask {
   position: absolute;
   width: 100%;
   height: 100%;
   left: 0;
   top: 0;
+  &.buttonMask {
+    z-index: 1;
+  }
+  &.selectedMask {
+    z-index: 2;
+  }
 }
 
 .placeholder {
@@ -60,14 +66,14 @@
 }
 
 .selectedOption {
-  margin: 4px;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   background-color: #adb5bd;
   border-radius: 5px;
+  position: relative;
+  overflow: hidden;
   .deleteButton {
     padding: 4px;
     display: flex;
@@ -84,6 +90,11 @@
     padding: 0 8px;
     margin: 0;
   }
+}
+
+.selectedOptionContainer {
+  position: relative;
+  padding: 4px;
 }
 
 .optionsContainer {
@@ -152,5 +163,29 @@
     height: 20px;
     border-left: 1px solid #a5abbb;
     padding-right: 5px;
+  }
+}
+
+.draggedOver {
+  &:before {
+    content: "";
+    height: 100%;
+    box-sizing: border-box;
+    border-left: 1px solid #495057;
+    position: absolute;
+    left: 0px;
+    top: 0;
+  }
+}
+
+.draggedOverLast {
+  &:before {
+    content: "";
+    height: 100%;
+    box-sizing: border-box;
+    border-left: 1px solid #495057;
+    position: absolute;
+    right: 0px;
+    top: 0;
   }
 }

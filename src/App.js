@@ -4,36 +4,36 @@ import { CustomSelect } from "./components/CustomSelect";
 
 const OPTIONS = [
   {
-    label: "test1",
-    id: "test1",
+    name: "test1",
+    index: "test1",
   },
   {
-    label: "test2",
-    id: "test2",
+    name: "test2",
+    index: "test2",
   },
   {
-    label: "test3",
-    id: "test3",
+    name: "test3",
+    index: "test3",
   },
   {
-    label: "test4",
-    id: "test4",
+    name: "test4",
+    index: "test4",
   },
   {
-    label: "test5",
-    id: "test5",
+    name: "test5",
+    index: "test5",
   },
   {
-    label: "test6",
-    id: "test6",
+    name: "test6",
+    index: "test6",
   },
   {
-    label: "test7",
-    id: "test7",
+    name: "test7",
+    index: "test7",
   },
   {
-    label: "test8",
-    id: "test8",
+    name: "test8",
+    index: "test8",
   },
 ];
 
@@ -43,6 +43,8 @@ function App() {
     <div className="App">
       <CustomSelect
         options={OPTIONS}
+        getId={(option) => option.index}
+        getLabel={(option) => option.name}
         selectedOptions={selectedOptions}
         onSelectOption={setSelectedOptions}
       />
